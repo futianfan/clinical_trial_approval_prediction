@@ -2,7 +2,7 @@
 
 ## Table Of Contents 
 
-- Installtion
+- Installation
   * Setup conda environment 
   * Activate conda
 - Raw Data 
@@ -45,6 +45,8 @@ For example, it uses `conda` or `pip` to install the required packages. It may t
 conda install -c rdkit rdkit  
 pip install tqdm scikit-learn 
 pip install torch
+pip install seaborn 
+pip install scipy
 ```
 
 
@@ -65,6 +67,11 @@ conda activate predict_drug_clinical_trial
 
 ### [clinicaltrial.gov](clinicaltrials.gov)
 
+We download all the clinical trials records from [ClinicalTrial.gov](https://clinicaltrials.gov/AllPublicXML.zip). 
+It contains 348,891 clinical trial records. The data size grows with time because more clinical trial records are added. 
+It describes many important information about clinical trials, including NCT ID (i.e.,  identifiers to each clinical study), disease names, drugs, brief title and summary, phase, criteria, and statistical analysis results. 
+
+
 - output
   - `./raw_data`: store all the xml files for all the trials (identified by NCT ID).  
   - `./trialtrove/trial_outcomes_v1.csv` 
@@ -75,9 +82,6 @@ mkdir -p raw_data
 cd raw_data
 wget https://clinicaltrials.gov/AllPublicXML.zip
 ```
-It is downloaded from [ClinicalTrial.gov](https://clinicaltrials.gov/AllPublicXML.zip). 
-It contains 348,891 clinical trial records. The data size grows with time because more clinical trial records are added. 
-It describes many important information about clinical trials, including NCT ID (i.e.,  identifiers to each clinical study), disease names, drugs, brief title and summary, phase, criteria, and statistical analysis results. 
 
 
 Then we unzip the ZIP file. The unzipped file occupies over 8.6 G. Please make sure you have enough space. 
@@ -143,7 +147,7 @@ python src/collect_disease_from_raw.py
   
   - [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system) is simplified molecular-input line-entry system of the molecule. 
 
-  - The drugs in ClinicalTrialGov are described in natural language. 
+  - The drugs in [ClinicalTrialGov](clinicaltrials.gov) are described in natural language. 
 
   - [DrugBank](https://go.drugbank.com/) contains rich information about drugs. 
 
@@ -215,7 +219,7 @@ python src/collect_raw_data.py | tee data_process.log
 
 
 
-<p align="center"><img src="./figure/dataset.png" alt="logo" width="600px" /></p>
+<p align="center"><img src="./figure/dataset.png" alt="logo" width="650px" /></p>
 
 
 
@@ -317,7 +321,7 @@ We use temporal split, where the earlier trials (before split date) are used for
 
 After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The empirical results are given for reference. 
 
-<p align="center"><img src="./figure/hint.png" alt="logo" width="500px" /></p>
+<p align="center"><img src="./figure/hint.png" alt="logo" width="650px" /></p>
 
 
 
