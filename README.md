@@ -15,6 +15,7 @@
   * drug to SMILES 
   * ICD-10 code hierarchy
   * Sentence Embedding for trial protocol 
+  * Selection of clinical trial
   * Data split 
   * Generated Dataset and Statistics  
 - Learn and Inference 
@@ -90,11 +91,10 @@ cd ../
 We use [DrugBank](https://go.drugbank.com/) to get the molecule structures ([SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system), simplified molecular-input line-entry system) of the drug. 
 The data is saved as `data/drugbank_drugs_info.csv `  
 
-### [MoleculeNet](https://moleculenet.org/) 
 
+### [ClinicalTable](https://clinicaltables.nlm.nih.gov/)
 
-
-
+[ClinicalTable](https://clinicaltables.nlm.nih.gov/) is a public API to convert disease name (natural language) into ICD-10 code. 
 
 
 
@@ -115,11 +115,11 @@ find raw_data/ -name NCT*.xml | sort > data/all_xml
 The current version has 348,891 trial IDs. 
 
 
-### diseases to icd10 
+### Disease to ICD-10 code
 
 - description
 
-  - The diseases in ClinicalTrialGov are described in natural language. 
+  - The diseases in [ClinicalTrialGov](clinicaltrials.gov) are described in natural language. 
 
   - On the other hand, [ICD-10](https://en.wikipedia.org/wiki/ICD-10) is the 10th revision of the International Statistical Classification of Diseases and Related Health Problems (ICD), a medical classification list by the World Health Organization (WHO). It leverages the hierarchical information inherent to medical ontologies. 
 
@@ -131,43 +131,23 @@ The current version has 348,891 trial IDs.
 
 - output
   -	`data/diseases.csv ` 
+
 ```bash 
 python src/collect_disease_from_raw.py
 ```
 
-<details>
-  <summary>Click here for the code!</summary>
-
-```python
-def get_icd_from_nih(name):
-  prefix = 'https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search?sf=code,name&terms='
-  name_lst = normalize_disease(name)
-  for name in name_lst:
-    url = prefix + name 
-    response = requests.get(url)
-    text = response.text 
-    if text == '[0,[],null,[]]':
-      continue  
-    text = text[1:-1]
-    idx1 = text.find('[')
-    idx2 = text.find(']')
-    codes = text[idx1+1:idx2].split(',')
-    codes = [i[1:-1] for i in codes]
-    return codes 
-  return None 
-```
-
-</details>
 
 ### drug to SMILES 
 
 - description
+  
+  - [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system) is simplified molecular-input line-entry system of the molecule. 
 
   - The drugs in ClinicalTrialGov are described in natural language. 
 
   - [DrugBank](https://go.drugbank.com/) contains rich information about drugs. 
 
-  - We use [DrugBank](https://go.drugbank.com/) to get the molecule structures ([SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system), simplified molecular-input line-entry system) of the drug. 
+  - We use [DrugBank](https://go.drugbank.com/) to get the molecule structures in terms of SMILES. 
 
 - input
   - `data/drugbank_drugs_info.csv `  
@@ -181,7 +161,9 @@ python src/drug2smiles.py
 
 
 
-### Aggregation
+### Selection of clinical trial
+
+We design the following inclusion/exclusion criteria to select eligible clinical trials for learning. 
 
 - inclusion criteria 
   - study-type is interventional 
@@ -211,16 +193,12 @@ python src/drug2smiles.py
 - output 
   - `data/raw_data.csv` (17,592 trials)
 
-```bash
-grep ^NCT data/raw_data.csv | wc -l
-```
-
 The csv file contains following features:
 
 * `nctid`: NCT ID, e.g., NCT00000378, NCT04439305. 
 * `status`: `completed`, `terminated`, `active, not recruiting`, `withdrawn`, `unknown status`, `suspended`, `recruiting`. 
 * `why_stop`: for completed, it is empty. Otherwise, the common reasons contain `slow/low/poor accrual`, `lack of efficacy`
-* `label`: 0 (failure) or 1 (success).  
+* `label`: 0 (failure) or 1 (approved).  
 * `phase`: I, II, III or IV. 
 * `diseases`: list of diseases. 
 * `icdcodes`: list of icd-10 codes.
@@ -252,7 +230,6 @@ python src/collect_raw_data.py | tee data_process.log
 
 - input
   - `data/raw_data.csv` 
-
 
 - output: 
   - `data/phase_I_{train/valid/test}.csv` 
@@ -328,11 +305,6 @@ We use temporal split, where the earlier trials (before split date) are used for
 
 
 
-<p align="center"><img src="./figure/dataset.png" alt="logo" width="600px" /></p>
-
-
-
-<p align="center"><img src="./figure/illustration.png" alt="logo" width="500px" /></p>
 
 
 
@@ -340,7 +312,14 @@ We use temporal split, where the earlier trials (before split date) are used for
 
 ## 5. Learn and Inference 
 
+
+
+
 After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The empirical results are given for reference. 
+
+<p align="center"><img src="./figure/hint.png" alt="logo" width="500px" /></p>
+
+
 
 ### Phase level Prediction
 
@@ -370,7 +349,7 @@ python src/learn_indication.py
 
 
 
-### metrics
+### METRICS
 
 - **PR-AUC** (Precision-Recall Area Under Curve). Precision-Recall curves summarize the trade-off between the true positive rate and the positive predictive value for a predictive model using different probability thresholds.
 - **F1**. The F1 score is the harmonic mean of the precision and recall.
