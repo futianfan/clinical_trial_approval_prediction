@@ -100,7 +100,9 @@ The data is saved as `data/drugbank_drugs_info.csv `
 
 [ClinicalTable](https://clinicaltables.nlm.nih.gov/) is a public API to convert disease name (natural language) into ICD-10 code. 
 
+### [MoleculeNet](https://moleculenet.org/)
 
+[MoleculeNet](https://moleculenet.org/) include five datasets across the main categories of drug pharmaco-kinetics (PK). For absorption, we use the bioavailability dataset. For distribution, we use the blood-brain-barrier experimental results provided. For metabolism, we use the CYP2C19 experiment paper, which is hosted in the PubChem biassay portal under AID 1851. For excretion, we use the clearance dataset from the eDrug3D database. For toxicity, we use the ToxCast dataset, provided by MoleculeNet. We consider drugs that are not toxic across all toxicology assays as not toxic and otherwise toxic. 
 
 
 ## Data Preprocessing 
@@ -317,11 +319,9 @@ We use temporal split, where the earlier trials (before split date) are used for
 ## 5. Learn and Inference 
 
 
+After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The following figure illustrates the pipeline of HINT. 
 
-
-After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The empirical results are given for reference. 
-
-<p align="center"><img src="./figure/hint.png" alt="logo" width="650px" /></p>
+<p align="center"><img src="./figure/hint.png" alt="logo" width="700px" /></p>
 
 
 
@@ -362,7 +362,7 @@ python src/learn_indication.py
 
 ### Result 
 
-The mean and standard deviation of 5 independent runs are reported. 
+The empirical results are given for reference. The mean and standard deviation of 5 independent runs are reported. 
 
 | Dataset  | PR-AUC | F1 | ROC-AUC |
 |-----------------|-------------|-------------|------------|
@@ -377,21 +377,6 @@ The mean and standard deviation of 5 independent runs are reported.
 ### Jupyter Notebook Tutorial 
 
 Please see `learn_phaseI.ipynb` for details. 
-
-
-
-## Quick Reproduction
-
-We provide a guidance for quick reproduction of the main experimental results. Since the data preprocessing procedure is time- and space-consuming, we make the processed data publicly available. 
-
-* Download (0. Download code repo)
-* Setup environment (1. Installation via Conda)
-* Download the [processed data](https://drive.google.com/drive/folders/1EJvVITNRdq4BYU6L27NF5f1moHqB8DTf?usp=sharing) from Google Drive. It requires 1.0 G. Please make sure that all the data files are in the folder "./data". 
-* Train and Test Model (5. Learn and Inference)
-
-
-
-
 
 
 
