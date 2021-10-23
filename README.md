@@ -65,7 +65,7 @@ conda activate predict_drug_clinical_trial
 
 
 
-### [clinicaltrial.gov](clinicaltrials.gov)
+### ClinicalTrial.gov
 
 We download all the clinical trials records from [ClinicalTrial.gov](https://clinicaltrials.gov/AllPublicXML.zip). 
 It contains 348,891 clinical trial records. The data size grows with time because more clinical trial records are added. 
@@ -90,17 +90,17 @@ unzip AllPublicXML.zip
 cd ../
 ```
 
-### [DrugBank](https://go.drugbank.com/)
+### DrugBank
 
 We use [DrugBank](https://go.drugbank.com/) to get the molecule structures ([SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system), simplified molecular-input line-entry system) of the drug. 
 The data is saved as `data/drugbank_drugs_info.csv `  
 
 
-### [ClinicalTable](https://clinicaltables.nlm.nih.gov/)
+### ClinicalTable
 
 [ClinicalTable](https://clinicaltables.nlm.nih.gov/) is a public API to convert disease name (natural language) into ICD-10 code. 
 
-### [MoleculeNet](https://moleculenet.org/)
+### MoleculeNet
 
 [MoleculeNet](https://moleculenet.org/) include five datasets across the main categories of drug pharmaco-kinetics (PK). For absorption, we use the bioavailability dataset. For distribution, we use the blood-brain-barrier experimental results provided. For metabolism, we use the CYP2C19 experiment paper, which is hosted in the PubChem biassay portal under AID 1851. For excretion, we use the clearance dataset from the eDrug3D database. For toxicity, we use the ToxCast dataset, provided by MoleculeNet. We consider drugs that are not toxic across all toxicology assays as not toxic and otherwise toxic. 
 
