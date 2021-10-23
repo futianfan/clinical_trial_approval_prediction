@@ -321,7 +321,7 @@ We use temporal split, where the earlier trials (before split date) are used for
 
 After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The following figure illustrates the pipeline of HINT. 
 
-<p align="center"><img src="./figure/hint.png" alt="logo" width="790px" /></p>
+<p align="center"><img src="./figure/hint.png" alt="logo" width="810px" /></p>
 
 
 
