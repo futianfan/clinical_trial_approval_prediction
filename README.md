@@ -10,7 +10,7 @@
   * DrugBank
   * MoleculeNet 
 - Data Preprocessing 
-  * Collect all the NCTIDs
+  * Collect all the records
   * diseases to icd10 
   * drug to SMILES 
   * ICD-10 code hierarchy
@@ -24,8 +24,6 @@
 - Contact 
 
 --- 
-
-
 
 ## Installation
 
@@ -56,25 +54,17 @@ conda activate predict_drug_clinical_trial
 ```
 
 
-
-
-
-
-
 ## Raw Data 
 
-
-
 ### ClinicalTrial.gov
-
-We download all the clinical trials records from [ClinicalTrial.gov](https://clinicaltrials.gov/AllPublicXML.zip). 
+- description
+  - We download all the clinical trials records from [ClinicalTrial.gov](https://clinicaltrials.gov/AllPublicXML.zip). 
 It contains 348,891 clinical trial records. The data size grows with time because more clinical trial records are added. 
 It describes many important information about clinical trials, including NCT ID (i.e.,  identifiers to each clinical study), disease names, drugs, brief title and summary, phase, criteria, and statistical analysis results. 
 
-
 - output
   - `./raw_data`: store all the xml files for all the trials (identified by NCT ID).  
-  - `./trialtrove/trial_outcomes_v1.csv` 
+  - **TrialTrove**: `./trialtrove/trial_outcomes_v1.csv` 
 
 
 ```bash 
@@ -92,23 +82,35 @@ cd ../
 
 ### DrugBank
 
-We use [DrugBank](https://go.drugbank.com/) to get the molecule structures ([SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system), simplified molecular-input line-entry system) of the drug. 
-The data is saved as `data/drugbank_drugs_info.csv `  
+- description
+  - We use [DrugBank](https://go.drugbank.com/) to get the molecule structures ([SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system), simplified molecular-input line-entry system) of the drug. 
 
+- input
+  - None 
+
+- output
+  - `data/drugbank_drugs_info.csv `  
 
 ### ClinicalTable
 
 [ClinicalTable](https://clinicaltables.nlm.nih.gov/) is a public API to convert disease name (natural language) into ICD-10 code. 
 
 ### MoleculeNet
+- description
+  - [MoleculeNet](https://moleculenet.org/) include five datasets across the main categories of drug pharmaco-kinetics (PK). For absorption, we use the bioavailability dataset. For distribution, we use the blood-brain-barrier experimental results provided. For metabolism, we use the CYP2C19 experiment paper, which is hosted in the PubChem biassay portal under AID 1851. For excretion, we use the clearance dataset from the eDrug3D database. For toxicity, we use the ToxCast dataset, provided by MoleculeNet. We consider drugs that are not toxic across all toxicology assays as not toxic and otherwise toxic. 
 
-[MoleculeNet](https://moleculenet.org/) include five datasets across the main categories of drug pharmaco-kinetics (PK). For absorption, we use the bioavailability dataset. For distribution, we use the blood-brain-barrier experimental results provided. For metabolism, we use the CYP2C19 experiment paper, which is hosted in the PubChem biassay portal under AID 1851. For excretion, we use the clearance dataset from the eDrug3D database. For toxicity, we use the ToxCast dataset, provided by MoleculeNet. We consider drugs that are not toxic across all toxicology assays as not toxic and otherwise toxic. 
+- input
+  - None 
 
+- output 
+  - `data/ADMET`
 
 ## Data Preprocessing 
 
+### Collect all the records
+- description
+  - download all the records from clinicaltrial.gov. The current version has 348,891 trial IDs. 
 
-### Collect all the NCTIDs
 - input
   - `raw_data/`: raw data, store all the xml files for all the trials (identified by NCT ID).   
 
@@ -118,7 +120,6 @@ The data is saved as `data/drugbank_drugs_info.csv `
 ```bash
 find raw_data/ -name NCT*.xml | sort > data/all_xml
 ```
-The current version has 348,891 trial IDs. 
 
 
 ### Disease to ICD-10 code
@@ -146,7 +147,6 @@ python src/collect_disease_from_raw.py
 ### drug to SMILES 
 
 - description
-  
   - [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system) is simplified molecular-input line-entry system of the molecule. 
 
   - The drugs in [ClinicalTrialGov](clinicaltrials.gov) are described in natural language. 
@@ -188,17 +188,6 @@ We design the following inclusion/exclusion criteria to select eligible clinical
   - drug molecules are not available 
   - eligibility criteria are not available
 
-
-- input    
-  - `data/diseases.csv ` 
-  - `data/drug2smiles.pkl`  
-  - `data/all_xml ` 
-  - `trialtrove/*`       
-
-
-- output 
-  - `data/raw_data.csv` (17,592 trials)
-
 The csv file contains following features:
 
 * `nctid`: NCT ID, e.g., NCT00000378, NCT04439305. 
@@ -211,6 +200,15 @@ The csv file contains following features:
 * `drugs`: list of drug names
 * `smiless`: list of SMILES
 * `criteria`: egibility criteria 
+
+- input    
+  - `data/diseases.csv ` 
+  - `data/drug2smiles.pkl`  
+  - `data/all_xml ` 
+  - `trialtrove/*`       
+
+- output 
+  - `data/raw_data.csv`
 
 
 ```bash
@@ -227,13 +225,11 @@ python src/collect_raw_data.py | tee data_process.log
 
 
 ### Data Split 
-
-- Split criteria
+- description (Split criteria)
   - phase I: phase I trials, augmented with phase IV trials as positive samples. 
   - phase II: phase II trials, augmented with phase IV trials as positive samples.  
   - phase III: phase III trials, augmented with failed phase I and II trials as negative samples and successed phase IV trials as positive samples. 
   - indication: trials that fail in phase I or II or III are negative samples. Trials that pass phase III or enter phase IV are positive samples.  
-
 - input
   - `data/raw_data.csv` 
 
@@ -249,7 +245,10 @@ python src/data_split.py
 ```
 
 
-### 4.2 ICD-10 code hierarchy 
+### ICD-10 code hierarchy 
+
+- description 
+  - get all the ancestor code for the current icd-10 code. 
 
 - input
   - `data/raw_data.csv` 
@@ -262,8 +261,10 @@ python src/data_split.py
 python src/icdcode_encode.py 
 ```
 
-### 4.3 sentence embedding 
+### sentence embedding 
 
+- description 
+  - BERT embedding to get sentence embedding for sentence in clinical protocol. 
 
 - input
   - `data/raw_data.csv` 
@@ -277,7 +278,7 @@ python src/protocol_encode.py
 ```
 
 
-### 4.4 Data Statistics 
+### Data Statistics 
 
 | Dataset  | \# Train | \# Valid | \# Test | \# Total | Split Date |
 |-----------------|-------------|-------------|------------|-------------|------------|
@@ -316,7 +317,7 @@ We use temporal split, where the earlier trials (before split date) are used for
 
 
 
-## 5. Learn and Inference 
+## Learn and Inference 
 
 
 After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The following figure illustrates the pipeline of HINT. 
@@ -325,7 +326,9 @@ After processing the data, we learn the Hierarchical Interaction Network (HINT) 
 
 
 
-### Phase level Prediction
+### Phase I/II/III Prediction
+
+Phase-level prediction predicts the approval probability of a single phase study. 
 
 ```bash
 python src/learn_phaseI.py
@@ -343,7 +346,9 @@ python src/learn_phaseIII.py
 
 
 
-### Indication Prediction
+### Indication level Prediction
+
+Indication-level prediction predicts if the drug can pass all three phases for the final market approval.
 
 ```bash
 python src/learn_indication.py 
