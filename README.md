@@ -342,427 +342,44 @@ We use temporal split, where the earlier trials (before split date) are used for
 
 After processing the data, we learn the Hierarchical Interaction Network (HINT) on the following four tasks. The empirical results are given for reference. 
 
-
-
-### 5.1 Phase I Prediction
+### Phase level Prediction
 
 ```bash
 python src/learn_phaseI.py
 ```
 
-<details>
-  <summary>Click here for the code!</summary>
-
-```python
-
-## 1. import 
-## 2. input & hyperparameter
-## 3. pretrain 
-## 4. 'dataloader, model build, train, inference'
-################################################
-
-
-## 1. import 
-import torch, os
-torch.manual_seed(0) 
-from dataloader import csv_three_feature_2_dataloader, generate_admet_dataloader_lst, csv_three_feature_2_complete_dataloader
-from molecule_encode import MPNN, ADMET 
-from icdcode_encode import GRAM, build_icdcode2ancestor_dict
-from protocol_encode import Protocol_Embedding
-from model import Interaction, HINT_nograph, HINT
-# device = torch.device("cuda:0")
-device = torch.device("cpu")
-
-
-
-
-
-## 2. input & hyperparameter
-
-base_name = 'phase_I' 
-datafolder = "data"
-
-train_file = os.path.join(datafolder, base_name + '_train.csv')
-valid_file = os.path.join(datafolder, base_name + '_valid.csv')
-test_file = os.path.join(datafolder, base_name + '_test.csv')
-
-
-
-
-
-# # ## 3. pretrain 
-mpnn_model = MPNN(mpnn_hidden_size = 50, mpnn_depth=3, device = device)
-
-admet_model_path = "save_model/admet_model.ckpt"
-if not os.path.exists(admet_model_path):
-  admet_dataloader_lst = generate_admet_dataloader_lst(batch_size=32)
-  admet_trainloader_lst = [i[0] for i in admet_dataloader_lst]
-  admet_testloader_lst = [i[1] for i in admet_dataloader_lst]
-  admet_model = ADMET(molecule_encoder = mpnn_model, 
-            highway_num=2, 
-            epoch=3, 
-            lr=5e-4, 
-            weight_decay=0, 
-            save_name = 'admet_')
-  admet_model.train(admet_trainloader_lst, admet_testloader_lst)
-  torch.save(admet_model, admet_model_path)
-else:
-  admet_model = torch.load(admet_model_path)
-
-
-## 4. dataloader, model build, train, inference
-train_loader = csv_three_feature_2_dataloader(train_file, shuffle=True, batch_size=32) 
-valid_loader = csv_three_feature_2_dataloader(valid_file, shuffle=False, batch_size=32) 
-test_loader = csv_three_feature_2_dataloader(test_file, shuffle=False, batch_size=32) 
-test_complete_loader = csv_three_feature_2_complete_dataloader(test_file, shuffle=False, batch_size = 32)
-
-icdcode2ancestor_dict = build_icdcode2ancestor_dict()
-gram_model = GRAM(embedding_dim = 50, icdcode2ancestor = icdcode2ancestor_dict, device = device)
-protocol_model = Protocol_Embedding(output_dim = 50, highway_num=3, device = device)
-
-
-
-hint_model_path = "save_model/" + base_name + ".ckpt"
-if not os.path.exists(hint_model_path):
-  model = HINT(molecule_encoder = mpnn_model, 
-       disease_encoder = gram_model, 
-       protocol_encoder = protocol_model,
-       device = device, 
-       global_embed_size = 50, 
-       highway_num_layer = 2,
-       prefix_name = base_name, 
-       gnn_hidden_size = 50,  
-       epoch = 5,
-       lr = 1e-3, 
-       weight_decay = 0, 
-      )
-  model.init_pretrain(admet_model)
-  model.learn(train_loader, valid_loader, test_loader)
-  model.bootstrap_test(test_loader)
-  torch.save(model, hint_model_path)
-else:
-  model = torch.load(hint_model_path)
-  model.bootstrap_test(test_loader)
-
-```
-
-</details>
-
-### 5.2 Phase II Prediction
 
 ```bash
 python src/learn_phaseII.py
 ```
 
-<details>
-  <summary>Click here for the code!</summary>
-
-```python
-
-## 1. import 
-## 2. input & hyperparameter
-## 3. pretrain 
-## 4. 'dataloader, model build, train, inference'
-################################################
-
-
-## 1. import 
-import torch, os
-torch.manual_seed(0) 
-from dataloader import csv_three_feature_2_dataloader, generate_admet_dataloader_lst, csv_three_feature_2_complete_dataloader
-from molecule_encode import MPNN, ADMET 
-from icdcode_encode import GRAM, build_icdcode2ancestor_dict
-from protocol_encode import Protocol_Embedding
-from model import Interaction, HINT_nograph, HINT
-# device = torch.device("cuda:0")
-device = torch.device("cpu")
-
-
-
-
-
-## 2. input & hyperparameter
-
-base_name = 'phase_II' 
-datafolder = "data"
-
-train_file = os.path.join(datafolder, base_name + '_train.csv')
-valid_file = os.path.join(datafolder, base_name + '_valid.csv')
-test_file = os.path.join(datafolder, base_name + '_test.csv')
-
-
-
-
-
-# # ## 3. pretrain 
-mpnn_model = MPNN(mpnn_hidden_size = 50, mpnn_depth=3, device = device)
-
-admet_model_path = "save_model/admet_model.ckpt"
-if not os.path.exists(admet_model_path):
-  admet_dataloader_lst = generate_admet_dataloader_lst(batch_size=32)
-  admet_trainloader_lst = [i[0] for i in admet_dataloader_lst]
-  admet_testloader_lst = [i[1] for i in admet_dataloader_lst]
-  admet_model = ADMET(molecule_encoder = mpnn_model, 
-            highway_num=2, 
-            epoch=3, 
-            lr=5e-4, 
-            weight_decay=0, 
-            save_name = 'admet_')
-  admet_model.train(admet_trainloader_lst, admet_testloader_lst)
-  torch.save(admet_model, admet_model_path)
-else:
-  admet_model = torch.load(admet_model_path)
-
-
-## 4. dataloader, model build, train, inference
-train_loader = csv_three_feature_2_dataloader(train_file, shuffle=True, batch_size=32) 
-valid_loader = csv_three_feature_2_dataloader(valid_file, shuffle=False, batch_size=32) 
-test_loader = csv_three_feature_2_dataloader(test_file, shuffle=False, batch_size=32) 
-test_complete_loader = csv_three_feature_2_complete_dataloader(test_file, shuffle=False, batch_size = 32)
-
-icdcode2ancestor_dict = build_icdcode2ancestor_dict()
-gram_model = GRAM(embedding_dim = 50, icdcode2ancestor = icdcode2ancestor_dict, device = device)
-protocol_model = Protocol_Embedding(output_dim = 50, highway_num=3, device = device)
-
-
-
-hint_model_path = "save_model/" + base_name + ".ckpt"
-if not os.path.exists(hint_model_path):
-  model = HINT(molecule_encoder = mpnn_model, 
-       disease_encoder = gram_model, 
-       protocol_encoder = protocol_model,
-       device = device, 
-       global_embed_size = 50, 
-       highway_num_layer = 2,
-       prefix_name = base_name, 
-       gnn_hidden_size = 50,  
-       epoch = 5,
-       lr = 1e-3, 
-       weight_decay = 0, 
-      )
-  model.init_pretrain(admet_model)
-  model.learn(train_loader, valid_loader, test_loader)
-  model.bootstrap_test(test_loader)
-  torch.save(model, hint_model_path)
-else:
-  model = torch.load(hint_model_path)
-  model.bootstrap_test(test_loader)
-
-```
-
-</details>
-
-### 5.3 Phase III Prediction
 
 ```bash
 python src/learn_phaseIII.py
 ```
 
-<details>
-  <summary>Click here for the code!</summary>
-
-```python
-
-## 1. import 
-## 2. input & hyperparameter
-## 3. pretrain 
-## 4. 'dataloader, model build, train, inference'
-################################################
 
 
-## 1. import 
-import torch, os
-torch.manual_seed(0) 
-from dataloader import csv_three_feature_2_dataloader, generate_admet_dataloader_lst, csv_three_feature_2_complete_dataloader
-from molecule_encode import MPNN, ADMET 
-from icdcode_encode import GRAM, build_icdcode2ancestor_dict
-from protocol_encode import Protocol_Embedding
-from model import Interaction, HINT_nograph, HINT
-# device = torch.device("cuda:0")
-device = torch.device("cpu")
-
-
-
-
-
-## 2. input & hyperparameter
-
-base_name = 'phase_III' 
-datafolder = "data"
-
-train_file = os.path.join(datafolder, base_name + '_train.csv')
-valid_file = os.path.join(datafolder, base_name + '_valid.csv')
-test_file = os.path.join(datafolder, base_name + '_test.csv')
-
-
-
-
-
-# # ## 3. pretrain 
-mpnn_model = MPNN(mpnn_hidden_size = 50, mpnn_depth=3, device = device)
-
-admet_model_path = "save_model/admet_model.ckpt"
-if not os.path.exists(admet_model_path):
-  admet_dataloader_lst = generate_admet_dataloader_lst(batch_size=32)
-  admet_trainloader_lst = [i[0] for i in admet_dataloader_lst]
-  admet_testloader_lst = [i[1] for i in admet_dataloader_lst]
-  admet_model = ADMET(molecule_encoder = mpnn_model, 
-            highway_num=2, 
-            epoch=3, 
-            lr=5e-4, 
-            weight_decay=0, 
-            save_name = 'admet_')
-  admet_model.train(admet_trainloader_lst, admet_testloader_lst)
-  torch.save(admet_model, admet_model_path)
-else:
-  admet_model = torch.load(admet_model_path)
-
-
-## 4. dataloader, model build, train, inference
-train_loader = csv_three_feature_2_dataloader(train_file, shuffle=True, batch_size=32) 
-valid_loader = csv_three_feature_2_dataloader(valid_file, shuffle=False, batch_size=32) 
-test_loader = csv_three_feature_2_dataloader(test_file, shuffle=False, batch_size=32) 
-test_complete_loader = csv_three_feature_2_complete_dataloader(test_file, shuffle=False, batch_size = 32)
-
-icdcode2ancestor_dict = build_icdcode2ancestor_dict()
-gram_model = GRAM(embedding_dim = 50, icdcode2ancestor = icdcode2ancestor_dict, device = device)
-protocol_model = Protocol_Embedding(output_dim = 50, highway_num=3, device = device)
-
-
-
-hint_model_path = "save_model/" + base_name + ".ckpt"
-if not os.path.exists(hint_model_path):
-  model = HINT(molecule_encoder = mpnn_model, 
-       disease_encoder = gram_model, 
-       protocol_encoder = protocol_model,
-       device = device, 
-       global_embed_size = 50, 
-       highway_num_layer = 2,
-       prefix_name = base_name, 
-       gnn_hidden_size = 50,  
-       epoch = 5,
-       lr = 1e-3, 
-       weight_decay = 0, 
-      )
-  model.init_pretrain(admet_model)
-  model.learn(train_loader, valid_loader, test_loader)
-  model.bootstrap_test(test_loader)
-  torch.save(model, hint_model_path)
-else:
-  model = torch.load(hint_model_path)
-  model.bootstrap_test(test_loader)
-
-```
-
-</details>
-
-### 5.4 Indication Prediction
+### Indication Prediction
 
 ```bash
 python src/learn_indication.py 
 ```
 
 
-<details>
-  <summary>Click here for the code!</summary>
-
-```python
-
-## 1. import 
-## 2. input & hyperparameter
-## 3. pretrain 
-## 4. 'dataloader, model build, train, inference'
-################################################
-
-
-## 1. import 
-import torch, os
-torch.manual_seed(0) 
-from dataloader import csv_three_feature_2_dataloader, generate_admet_dataloader_lst, csv_three_feature_2_complete_dataloader
-from molecule_encode import MPNN, ADMET 
-from icdcode_encode import GRAM, build_icdcode2ancestor_dict
-from protocol_encode import Protocol_Embedding
-from model import Interaction, HINT_nograph, HINT
-# device = torch.device("cuda:0")
-device = torch.device("cpu")
 
 
 
+### metrics
+
+- **PR-AUC** (Precision-Recall Area Under Curve). Precision-Recall curves summarize the trade-off between the true positive rate and the positive predictive value for a predictive model using different probability thresholds.
+- **F1**. The F1 score is the harmonic mean of the precision and recall.
+- **ROC-AUC** (Area Under the Receiver Operating Characteristic Curve). ROC curve summarize the trade-off between the true positive rate and false positive rate for a predictive model using different probability thresholds. 
 
 
-## 2. input & hyperparameter
+### Result 
 
-base_name = 'indication' 
-datafolder = "data"
-
-train_file = os.path.join(datafolder, base_name + '_train.csv')
-valid_file = os.path.join(datafolder, base_name + '_valid.csv')
-test_file = os.path.join(datafolder, base_name + '_test.csv')
-
-
-
-
-
-# # ## 3. pretrain 
-mpnn_model = MPNN(mpnn_hidden_size = 50, mpnn_depth=3, device = device)
-
-admet_model_path = "save_model/admet_model.ckpt"
-if not os.path.exists(admet_model_path):
-  admet_dataloader_lst = generate_admet_dataloader_lst(batch_size=32)
-  admet_trainloader_lst = [i[0] for i in admet_dataloader_lst]
-  admet_testloader_lst = [i[1] for i in admet_dataloader_lst]
-  admet_model = ADMET(molecule_encoder = mpnn_model, 
-            highway_num=2, 
-            epoch=3, 
-            lr=5e-4, 
-            weight_decay=0, 
-            save_name = 'admet_')
-  admet_model.train(admet_trainloader_lst, admet_testloader_lst)
-  torch.save(admet_model, admet_model_path)
-else:
-  admet_model = torch.load(admet_model_path)
-
-
-## 4. dataloader, model build, train, inference
-train_loader = csv_three_feature_2_dataloader(train_file, shuffle=True, batch_size=32) 
-valid_loader = csv_three_feature_2_dataloader(valid_file, shuffle=False, batch_size=32) 
-test_loader = csv_three_feature_2_dataloader(test_file, shuffle=False, batch_size=32) 
-test_complete_loader = csv_three_feature_2_complete_dataloader(test_file, shuffle=False, batch_size = 32)
-
-icdcode2ancestor_dict = build_icdcode2ancestor_dict()
-gram_model = GRAM(embedding_dim = 50, icdcode2ancestor = icdcode2ancestor_dict, device = device)
-protocol_model = Protocol_Embedding(output_dim = 50, highway_num=3, device = device)
-
-
-
-hint_model_path = "save_model/" + base_name + ".ckpt"
-if not os.path.exists(hint_model_path):
-  model = HINT(molecule_encoder = mpnn_model, 
-       disease_encoder = gram_model, 
-       protocol_encoder = protocol_model,
-       device = device, 
-       global_embed_size = 50, 
-       highway_num_layer = 2,
-       prefix_name = base_name, 
-       gnn_hidden_size = 50,  
-       epoch = 5,
-       lr = 1e-3, 
-       weight_decay = 0, 
-      )
-  model.init_pretrain(admet_model)
-  model.learn(train_loader, valid_loader, test_loader)
-  model.bootstrap_test(test_loader)
-  torch.save(model, hint_model_path)
-else:
-  model = torch.load(hint_model_path)
-  model.bootstrap_test(test_loader)
-
-```
-
-</details>
-### Result Table 
-
-Mean and standard deviation are reported. 
+The mean and standard deviation of 5 independent runs are reported. 
 
 | Dataset  | PR-AUC | F1 | ROC-AUC |
 |-----------------|-------------|-------------|------------|
@@ -771,22 +388,6 @@ Mean and standard deviation are reported.
 | Phase III | 0.6279 (0.0165) | 0.6419 (0.0183) | 0.7257 (0.0109) |    
 | Indication | 0.7136 (0.0120) | 0.7798 (0.0087) | 0.7987 (0.0111)  |   
 
-
-
-### specify cpu or gpu in learn_X.py 
-```python
-device = torch.device("cuda:0")
-device = torch.device("cpu")
-```
-
- 
-### File Layout
- 
- <p align="center"><img src="./figure/architecture.png" alt="logo" width="500px" /></p>
-
-
-
-[README for model structure](https://github.com/futianfan/clinical-trial-outcome-prediction/tree/main/src)
 
 
 
